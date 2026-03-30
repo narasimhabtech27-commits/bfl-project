@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blockchain-Enabled Federated Learning</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --bg2: #111827;
+    --bg3: #1a2235;
+    --card: #141c2e;
+    --border: rgba(99,179,237,0.15);
+    --accent: #63b3ed;
+    --accent2: #68d391;
+    --accent3: #f6ad55;
+    --danger: #fc8181;
+    --text: #e2e8f0;
+    --muted: #718096;
+    --mono: 'Space Mono', monospace;
+    --sans: 'DM Sans', sans-serif;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 16px;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(99,179,237,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(99,179,237,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: rgba(10,14,26,0.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    padding: 0 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    height: 56px;
+  }
+  .nav-logo {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    letter-spacing: 0.05em;
+  }
+  .nav-links { display: flex; gap: 2rem; }
+  .nav-links a {
+    font-size: 13px; color: var(--muted);
+    text-decoration: none; letter-spacing: 0.03em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--accent); }
+
+  /* HERO */
+  .hero {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center;
+    padding: 6rem 2rem 4rem;
+  }
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(99,179,237,0.1);
+    border: 1px solid rgba(99,179,237,0.3);
+    border-radius: 100px;
+    padding: 6px 16px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.08em;
+    margin-bottom: 2rem;
+    animation: fadeUp 0.6s ease both;
+  }
+  .hero-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--accent2);
+    animation: pulse 2s ease infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+  h1 {
+    font-family: var(--mono);
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s 0.1s ease both;
+  }
+  h1 span { color: var(--accent); }
+  .hero-sub {
+    font-size: 1.1rem;
+    color: var(--muted);
+    max-width: 600px;
+    margin-bottom: 3rem;
+    font-weight: 300;
+    animation: fadeUp 0.6s 0.2s ease both;
+  }
+  .hero-stats {
+    display: flex; gap: 3rem; justify-content: center;
+    animation: fadeUp 0.6s 0.3s ease both;
+    flex-wrap: wrap;
+  }
+  .stat {
+    text-align: center;
+  }
+  .stat-num {
+    font-family: var(--mono);
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--accent);
+    display: block;
+  }
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  @keyframes fadeUp {
+    from { opacity:0; transform: translateY(20px); }
+    to   { opacity:1; transform: translateY(0); }
+  }
+
+  /* SECTIONS */
+  section {
+    position: relative; z-index: 1;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 5rem 2rem;
+  }
+  .section-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  h2 {
+    font-family: var(--mono);
+    font-size: 1.8rem;
+    font-weight: 700;
+    margin-bottom: 2.5rem;
+    letter-spacing: -0.02em;
+  }
+  h3 {
+    font-family: var(--mono);
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+    letter-spacing: 0.02em;
+  }
+
+  /* CARD */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 2rem;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: rgba(99,179,237,0.35); }
+
+  /* PHASES GRID */
+  .phases { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+  .phase-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .phase-card:hover { transform: translateY(-3px); border-color: rgba(99,179,237,0.4); }
+  .phase-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .phase-card.p1::before { background: var(--accent2); }
+  .phase-card.p2::before { background: var(--accent); }
+  .phase-card.p3::before { background: var(--accent3); }
+  .phase-num {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    margin-bottom: 0.5rem;
+  }
+  .phase-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.75rem; }
+  .phase-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.6; }
+  .phase-result {
+    margin-top: 1.25rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    background: rgba(99,179,237,0.07);
+    color: var(--accent);
+    border: 1px solid rgba(99,179,237,0.15);
+  }
+  .phase-card.p1 .phase-result { background: rgba(104,211,145,0.07); color: var(--accent2); border-color: rgba(104,211,145,0.2); }
+  .phase-card.p3 .phase-result { background: rgba(246,173,85,0.07); color: var(--accent3); border-color: rgba(246,173,85,0.2); }
+
+  /* CHARTS */
+  .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 720px) { .charts-grid { grid-template-columns: 1fr; } }
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+  }
+  .chart-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text);
+    margin-bottom: 1.25rem;
+    letter-spacing: 0.02em;
+  }
+  .chart-wrap { position: relative; height: 260px; }
+
+  /* RESULTS TABLE */
+  .results-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  .results-table th {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-align: left;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+  .results-table td {
+    padding: 0.85rem 1rem;
+    border-bottom: 1px solid rgba(99,179,237,0.06);
+    font-size: 14px;
+  }
+  .results-table tr:last-child td { border-bottom: none; }
+  .results-table tr:hover td { background: rgba(99,179,237,0.04); }
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 100px;
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 700;
+  }
+  .badge-green { background: rgba(104,211,145,0.15); color: var(--accent2); }
+  .badge-red   { background: rgba(252,129,129,0.15); color: var(--danger); }
+  .badge-blue  { background: rgba(99,179,237,0.15);  color: var(--accent); }
+
+  /* ARCHITECTURE */
+  .arch-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+  .arch-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+  .arch-icon {
+    width: 36px; height: 36px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    margin-bottom: 0.75rem;
+  }
+  .arch-name { font-weight: 600; font-size: 14px; margin-bottom: 0.4rem; }
+  .arch-desc { font-size: 13px; color: var(--muted); }
+
+  /* TIMELINE */
+  .timeline { position: relative; padding-left: 2rem; }
+  .timeline::before {
+    content: '';
+    position: absolute; left: 6px; top: 6px; bottom: 6px;
+    width: 2px;
+    background: linear-gradient(to bottom, var(--accent2), var(--accent), var(--accent3));
+    border-radius: 2px;
+  }
+  .tl-item { position: relative; margin-bottom: 2rem; }
+  .tl-dot {
+    position: absolute; left: -2rem;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    top: 4px;
+  }
+  .tl-dot.green { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
+  .tl-dot.blue  { background: var(--accent);  box-shadow: 0 0 8px var(--accent); }
+  .tl-dot.amber { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
+  .tl-dot.red   { background: var(--danger);  box-shadow: 0 0 8px var(--danger); }
+  .tl-round {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 0.25rem;
+  }
+  .tl-event { font-size: 14px; font-weight: 500; margin-bottom: 0.25rem; }
+  .tl-detail { font-size: 13px; color: var(--muted); }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-x: auto;
+    color: #a8d8f0;
+  }
+  .code-kw  { color: #f6ad55; }
+  .code-fn  { color: #68d391; }
+  .code-str { color: #fc8181; }
+  .code-cm  { color: #4a5568; }
+
+  /* FILE TREE */
+  .file-tree {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 2;
+  }
+  .ft-folder { color: var(--accent3); }
+  .ft-file   { color: var(--accent); padding-left: 1.5rem; }
+  .ft-desc   { color: var(--muted); font-size: 11px; margin-left: 1rem; }
+
+  /* FOOTER */
+  footer {
+    position: relative; z-index: 1;
+    text-align: center;
+    padding: 3rem 2rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+    font-family: var(--mono);
+  }
+
+  /* DIVIDER */
+  .divider {
+    height: 1px;
+    background: linear-gradient(to right, transparent, var(--border), transparent);
+    margin: 0 2rem;
+  }
+
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 640px) { .two-col { grid-template-columns: 1fr; } }
+  p { color: var(--muted); margin-bottom: 1rem; font-weight: 300; }
+  ul { color: var(--muted); padding-left: 1.5rem; font-weight: 300; }
+  ul li { margin-bottom: 0.5rem; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo">BFL_PROJECT.exe</div>
+  <div class="nav-links">
+    <a href="#phases">Phases</a>
+    <a href="#results">Results</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#timeline">Timeline</a>
+    <a href="#files">Files</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">IEEE ICISC-2025 Implementation</div>
+  <h1>Blockchain-Enabled<br><span>Federated Learning</span></h1>
+  <p class="hero-sub">A privacy-preserving AI system with decentralized model aggregation, smart contract verification, and adversarial attack detection.</p>
+  <div class="hero-stats">
+    <div class="stat">
+      <span class="stat-num">96.78%</span>
+      <span class="stat-label">Final Accuracy</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">61</span>
+      <span class="stat-label">On-chain Updates</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">5</span>
+      <span class="stat-label">FL Clients</span>
+    </div>
+    <div class="stat">
+      <span class="stat-num">Rnd 2</span>
+      <span class="stat-label">Attack Detected</span>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PHASES -->
+<section id="phases">
+  <div class="section-label">// Implementation</div>
+  <h2>Three-Phase Build</h2>
+  <div class="phases">
+    <div class="phase-card p1">
+      <div class="phase-num">PHASE 01</div>
+      <div class="phase-title">Federated Learning Baseline</div>
+      <div class="phase-desc">Built a CNN model trained across 5 clients on MNIST using the FedAvg algorithm. No raw data sharing — only model weights exchanged each round.</div>
+      <div class="phase-result">96.20% accuracy · 10 rounds · 5 clients</div>
+    </div>
+    <div class="phase-card p2">
+      <div class="phase-num">PHASE 02</div>
+      <div class="phase-title">Blockchain Integration</div>
+      <div class="phase-desc">Deployed a Solidity smart contract on a local Ethereum network (Ganache). Every model update is hashed and logged as an immutable on-chain transaction via Web3.py.</div>
+      <div class="phase-result">50 on-chain updates · Smart contract verified</div>
+    </div>
+    <div class="phase-card p3">
+      <div class="phase-num">PHASE 03</div>
+      <div class="phase-title">Privacy + Attack Detection</div>
+      <div class="phase-desc">Added Differential Privacy (Gaussian noise), cosine similarity trust scoring, and Proof-of-Contribution consensus. Simulated a poisoning attack — caught and blocked by round 2.</div>
+      <div class="phase-result">Attacker rejected round 2 · 96.78% final accuracy</div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- RESULTS -->
+<section id="results">
+  <div class="section-label">// Experimental Results</div>
+  <h2>Performance Metrics</h2>
+
+  <div class="charts-grid" style="margin-bottom:1.5rem">
+    <div class="chart-card">
+      <div class="chart-title">Accuracy — Phase 2 vs Phase 3</div>
+      <div class="chart-wrap"><canvas id="accuracyChart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">Attacker trust score decay</div>
+      <div class="chart-wrap"><canvas id="trustChart"></canvas></div>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <div class="chart-title">Phase 2 — accuracy per round</div>
+      <div class="chart-wrap"><canvas id="phase2Chart"></canvas></div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-title">On-chain updates per phase</div>
+      <div class="chart-wrap"><canvas id="blockchainChart"></canvas></div>
+    </div>
+  </div>
+
+  <br>
+  <div class="card">
+    <h3>Comparison Table</h3>
+    <table class="results-table">
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Phase 1 — FedAvg</th>
+          <th>Phase 2 — BFL</th>
+          <th>Phase 3 — BFL + DP + Trust</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Final accuracy</td>
+          <td>0.9620</td>
+          <td>0.9620</td>
+          <td><strong>0.9678</strong></td>
+        </tr>
+        <tr>
+          <td>Attack detected</td>
+          <td><span class="badge badge-red">No</span></td>
+          <td><span class="badge badge-red">No</span></td>
+          <td><span class="badge badge-green">Yes — Round 2</span></td>
+        </tr>
+        <tr>
+          <td>Privacy mechanism</td>
+          <td>None</td>
+          <td>SHA-256 hash</td>
+          <td>DP + Trust scoring</td>
+        </tr>
+        <tr>
+          <td>On-chain updates</td>
+          <td>0</td>
+          <td>50</td>
+          <td>61</td>
+        </tr>
+        <tr>
+          <td>Attacker final trust</td>
+          <td>N/A</td>
+          <td>N/A</td>
+          <td>0.206 (rejected)</td>
+        </tr>
+        <tr>
+          <td>Rounds</td>
+          <td>10</td>
+          <td>10</td>
+          <td>15</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ARCHITECTURE -->
+<section id="architecture">
+  <div class="section-label">// System Design</div>
+  <h2>Architecture Overview</h2>
+  <div class="arch-grid" style="margin-bottom:2rem">
+    <div class="arch-item">
+      <div class="arch-icon" style="background:rgba(104,211,145,0.1)">🖥</div>
+      <div class="arch-name">5 FL Clients</div>
+      <div class="arch-desc">Each holds 12,000 private MNIST images. Trains locally, never shares raw data.</div>
+    </div>
+    <div class="arch-item">
+      <div class="arch-icon" style="background:rgba(99,179,237,0.1)">⚙</div>
+      <div class="arch-name">Federated Server</div>
+      <div class="arch-desc">Runs FedAvg aggregation. Only processes blockchain-verified updates.</div>
+    </div>
+    <div class="arch-item">
+      <div class="arch-icon" style="background:rgba(246,173,85,0.1)">⛓</div>
+      <div class="arch-name">Ethereum Blockchain</div>
+      <div class="arch-desc">Local Ganache network. Smart contract logs every update immutably.</div>
+    </div>
+    <div class="arch-item">
+      <div class="arch-icon" style="background:rgba(252,129,129,0.1)">🛡</div>
+      <div class="arch-name">Trust Scoring (PoC)</div>
+      <div class="arch-desc">Cosine similarity tracks client honesty. Malicious clients decay below threshold and are blocked.</div>
+    </div>
+  </div>
+
+  <div class="two-col">
+    <div class="card">
+      <h3>FedAvg Formula</h3>
+      <div class="code-block">
+<span class="code-cm"># Global model update each round</span>
+w_global = <span class="code-fn">sum</span>(p_i * w_i)
+
+<span class="code-cm"># p_i = data proportion of client i</span>
+p_i = m_i / <span class="code-fn">sum</span>(m_i)
+
+<span class="code-cm"># Local SGD update</span>
+w_i(t+1) = w_i(t) - η∇L_i(w_i(t))
+      </div>
+    </div>
+    <div class="card">
+      <h3>Trust Score Update</h3>
+      <div class="code-block">
+<span class="code-cm"># Proof-of-Contribution scoring</span>
+T_i(t+1) = α·T_i(t) + (1-α)·S_i(t)
+
+<span class="code-cm"># S_i = cosine similarity</span>
+S_i = dot(w_global, w_local)
+    / (‖w_global‖ · ‖w_local‖)
+
+<span class="code-cm"># Reject if below threshold</span>
+<span class="code-kw">if</span> T_i &lt; <span class="code-str">0.85</span>: reject(client_i)
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TIMELINE -->
+<section id="timeline">
+  <div class="section-label">// Attack Simulation</div>
+  <h2>Round-by-Round Timeline</h2>
+  <div class="two-col">
+    <div>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot red"></div>
+          <div class="tl-round">ROUND 1</div>
+          <div class="tl-event">Attacker submits poisoned weights</div>
+          <div class="tl-detail">Trust score: 0.900 — still above threshold. Accepted. Model corrupted, accuracy drops to 4.3%.</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot amber"></div>
+          <div class="tl-round">ROUND 2</div>
+          <div class="tl-event">Attacker REJECTED — global model reset</div>
+          <div class="tl-detail">Trust score: 0.810 — below 0.85 threshold. Blockchain logs rejection. Model reinitialised from clean state.</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot green"></div>
+          <div class="tl-round">ROUND 3</div>
+          <div class="tl-event">Model recovery begins</div>
+          <div class="tl-detail">4 clean clients only. Accuracy jumps to 90.59% immediately after reset.</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot blue"></div>
+          <div class="tl-round">ROUNDS 4–15</div>
+          <div class="tl-event">Steady convergence</div>
+          <div class="tl-detail">Attacker continues sending poison but is rejected every round. Trust score decays to 0.206. Final accuracy: 96.78%.</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3>Key Observations</h3>
+      <ul>
+        <li>Attacker's cosine similarity stayed near <strong>0.000</strong> every round — poisoned weights have no correlation with honest updates</li>
+        <li>Trust score decayed from 1.0 → 0.206 over 15 rounds, demonstrating permanent reputation damage</li>
+        <li>After model reset in round 2, accuracy recovered to <strong>90.59%</strong> in a single round</li>
+        <li>Final accuracy of <strong>96.78%</strong> exceeded the unattacked baseline of 96.20%</li>
+        <li>All 61 verified updates are permanently recorded on the Ethereum blockchain with timestamps</li>
+        <li>Differential Privacy (ε=100) added negligible noise while protecting weight privacy</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- FILES -->
+<section id="files">
+  <div class="section-label">// Project Structure</div>
+  <h2>Files &amp; Code</h2>
+  <div class="two-col">
+    <div class="file-tree">
+      <div class="ft-folder">📁 bfl_project/</div>
+      <div class="ft-file">📄 fl_phase1.py <span class="ft-desc">← FL baseline</span></div>
+      <div class="ft-file">📄 bfl_phase2.py <span class="ft-desc">← blockchain integration</span></div>
+      <div class="ft-file">📄 bfl_phase3.py <span class="ft-desc">← DP + trust scoring</span></div>
+      <div class="ft-file">📄 blockchain.py <span class="ft-desc">← Web3.py connection</span></div>
+      <div class="ft-file">📄 ModelRegistry.sol <span class="ft-desc">← smart contract</span></div>
+      <div class="ft-file">📄 generate_results.py <span class="ft-desc">← graphs</span></div>
+      <div class="ft-file">🖼 figure1_accuracy_trust.png</div>
+      <div class="ft-file">🖼 figure2_comparison.png</div>
+      <div class="ft-file">🖼 figure3_blockchain_updates.png</div>
+      <div class="ft-file">📝 project_report.md</div>
+    </div>
+    <div class="card">
+      <h3>Tech Stack</h3>
+      <ul>
+        <li><strong style="color:var(--accent)">Python 3.x</strong> — core implementation</li>
+        <li><strong style="color:var(--accent)">TensorFlow / Keras</strong> — CNN model training</li>
+        <li><strong style="color:var(--accent)">NumPy</strong> — FedAvg, differential privacy, trust scoring</li>
+        <li><strong style="color:var(--accent)">Solidity 0.8.0</strong> — smart contract (ModelRegistry)</li>
+        <li><strong style="color:var(--accent)">Ganache v7.9.2</strong> — local Ethereum blockchain</li>
+        <li><strong style="color:var(--accent)">Web3.py</strong> — Python ↔ blockchain bridge</li>
+        <li><strong style="color:var(--accent)">py-solc-x</strong> — Solidity compiler</li>
+        <li><strong style="color:var(--accent)">Matplotlib</strong> — result graphs</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<footer>
+  <div style="margin-bottom:0.5rem">Blockchain-Enabled Federated Learning · IEEE ICISC-2025</div>
+  <div>Built with TensorFlow · Ethereum · Web3.py · Python</div>
+</footer>
+
+<script>
+const chartDefaults = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: { legend: { labels: { color: '#718096', font: { family: 'DM Sans', size: 12 } } } },
+  scales: {
+    x: { grid: { color: 'rgba(99,179,237,0.06)' }, ticks: { color: '#718096', font: { family: 'Space Mono', size: 11 } } },
+    y: { grid: { color: 'rgba(99,179,237,0.06)' }, ticks: { color: '#718096', font: { family: 'Space Mono', size: 11 } } }
+  }
+};
+
+// Chart 1: Accuracy comparison
+new Chart(document.getElementById('accuracyChart'), {
+  type: 'line',
+  data: {
+    labels: [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+    datasets: [
+      {
+        label: 'Phase 2 — BFL',
+        data: [0.9086,0.9210,0.9299,0.9401,0.9450,0.9502,0.9537,0.9575,0.9599,0.9620,null,null,null,null,null],
+        borderColor: '#63b3ed', backgroundColor: 'rgba(99,179,237,0.08)',
+        pointBackgroundColor: '#63b3ed', tension: 0.3, borderWidth: 2, pointRadius: 4
+      },
+      {
+        label: 'Phase 3 — BFL+DP+Trust',
+        data: [0.0434,null,0.9059,0.9232,0.9344,0.9385,0.9471,0.9503,0.9551,0.9547,0.9597,0.9615,0.9635,0.9658,0.9678],
+        borderColor: '#fc8181', backgroundColor: 'rgba(252,129,129,0.08)',
+        pointBackgroundColor: '#fc8181', tension: 0.3, borderWidth: 2, pointRadius: 4,
+        spanGaps: false
+      }
+    ]
+  },
+  options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, min: 0, max: 1.05 } } }
+});
+
+// Chart 2: Trust score
+new Chart(document.getElementById('trustChart'), {
+  type: 'line',
+  data: {
+    labels: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15],
+    datasets: [
+      {
+        label: 'Attacker trust score',
+        data: [1.0,0.900,0.810,0.729,0.656,0.590,0.531,0.478,0.431,0.388,0.349,0.314,0.282,0.254,0.228,0.206],
+        borderColor: '#fc8181', backgroundColor: 'rgba(252,129,129,0.08)',
+        pointBackgroundColor: '#fc8181', tension: 0.3, borderWidth: 2, pointRadius: 4, fill: true
+      },
+      {
+        label: 'Rejection threshold (0.85)',
+        data: Array(16).fill(0.85),
+        borderColor: '#f6ad55', borderDash: [6,4],
+        borderWidth: 2, pointRadius: 0
+      }
+    ]
+  },
+  options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, min: 0, max: 1.1 } } }
+});
+
+// Chart 3: Phase 2 per round
+new Chart(document.getElementById('phase2Chart'), {
+  type: 'bar',
+  data: {
+    labels: [1,2,3,4,5,6,7,8,9,10],
+    datasets: [{
+      label: 'Accuracy',
+      data: [0.9086,0.9210,0.9299,0.9401,0.9450,0.9502,0.9537,0.9575,0.9599,0.9620],
+      backgroundColor: 'rgba(99,179,237,0.25)',
+      borderColor: '#63b3ed', borderWidth: 1.5, borderRadius: 4
+    }]
+  },
+  options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, min: 0.88, max: 0.97 } } }
+});
+
+// Chart 4: On-chain updates
+new Chart(document.getElementById('blockchainChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Phase 2 (10 rounds)', 'Phase 3 (15 rounds)'],
+    datasets: [{
+      label: 'On-chain updates',
+      data: [50, 61],
+      backgroundColor: ['rgba(99,179,237,0.3)', 'rgba(246,173,85,0.3)'],
+      borderColor: ['#63b3ed', '#f6ad55'],
+      borderWidth: 1.5, borderRadius: 6
+    }]
+  },
+  options: { ...chartDefaults, scales: { ...chartDefaults.scales, y: { ...chartDefaults.scales.y, min: 0, max: 80 } } }
+});
+</script>
+</body>
+</html>
