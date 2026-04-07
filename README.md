@@ -75,34 +75,34 @@ With BFL:     Each hospital trains locally → sends only learned weights
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    BFL SYSTEM OVERVIEW                       │
+│                    BFL SYSTEM OVERVIEW                      │
 │                                                             │
-│   ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐  │
-│   │ Client 1 │  │ Client 2 │  │ Client 3 │  │ Client 4 │  │
-│   │ 12,000   │  │ 12,000   │  │ ATTACKER │  │ 12,000   │  │
-│   │ images   │  │ images   │  │ (poison) │  │ images   │  │
-│   └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘  │
-│        │              │              │              │         │
-│        └──────────────┼──────────────┼──────────────┘        │
-│                       ▼              │                        │
-│            ┌─────────────────────┐   │                        │
-│            │  Differential       │   │                        │
-│            │  Privacy (DP noise) │   │                        │
-│            └─────────┬───────────┘   │                        │
-│                      ▼               ▼                        │
-│            ┌─────────────────────────────────┐               │
-│            │   Ethereum Blockchain (Ganache)  │               │
-│            │   ModelRegistry.sol              │               │
-│            │   SHA-256 hash logged on-chain   │               │
-│            │   Trust score computed           │               │
-│            │   Attacker REJECTED              │               │
-│            └─────────────────┬───────────────┘               │
-│                              ▼                                │
-│            ┌─────────────────────────────────┐               │
-│            │      Federated Server            │               │
-│            │      FedAvg Aggregation          │               │
-│            │      (honest updates only)       │               │
-│            └─────────────────────────────────┘               │
+│   ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
+│   │ Client 1 │  │ Client 2 │  │ Client 3 │  │ Client 4 │    │
+│   │ 12,000   │  │ 12,000   │  │ ATTACKER │  │ 12,000   │    │
+│   │ images   │  │ images   │  │ (poison) │  │ images   │    │
+│   └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
+│        │              │              │              │       │
+│        └──────────────┼──────────────┼──────────────┘       │
+│                       ▼              │                      │
+│            ┌─────────────────────┐   │                      │
+│            │  Differential       │   │                      │
+│            │  Privacy (DP noise) │   │                      │
+│            └─────────┬───────────┘   │                      │
+│                      ▼               ▼                      │
+│            ┌─────────────────────────────────┐              │
+│            │   Ethereum Blockchain (Ganache) │              │
+│            │   ModelRegistry.sol             │              │
+│            │   SHA-256 hash logged on-chain  │              │
+│            │   Trust score computed          │              │
+│            │   Attacker REJECTED             │              │
+│            └─────────────────┬───────────────┘              │
+│                              ▼                              │
+│            ┌─────────────────────────────────┐              │
+│            │      Federated Server           │              │
+│            │      FedAvg Aggregation         │              │
+│            │      (honest updates only)      │              │
+│            └─────────────────────────────────┘              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -171,21 +171,21 @@ No client ever sees another client's data. This is the core privacy guarantee of
 ```
 bfl_project/
 │
-├── fl_phase1.py                  # Phase 1: Federated Learning baseline
-├── bfl_phase2.py                 # Phase 2: FL + Blockchain integration
-├── bfl_phase3.py                 # Phase 3: FL + Blockchain + DP + Trust scoring
+├── fl_phase1.py                  
+├── bfl_phase2.py                
+├── bfl_phase3.py                 
 │
-├── blockchain.py                 # Web3.py connection, hash, deploy, submit
-├── ModelRegistry.sol             # Solidity smart contract
+├── blockchain.py                 
+├── ModelRegistry.sol            
 │
-├── generate_results.py           # Generate all result graphs
+├── generate_results.py           
 │
-├── figure1_accuracy_trust.png    # Accuracy curve + trust score decay
-├── figure2_comparison.png        # Bar chart: Phase 1 vs 2 vs 3
-├── figure3_blockchain_updates.png # On-chain update counts
+├── figure1_accuracy_trust.png    
+├── figure2_comparison.png        
+├── figure3_blockchain_updates.png 
 │
-├── project_report.md             # Full written report
-└── README.md                     # This file
+├── project_report.md            
+└── README.md                    
 ```
 
 ---
