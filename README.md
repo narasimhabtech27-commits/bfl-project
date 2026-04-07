@@ -1,563 +1,356 @@
-# Blockchain-Enabled Federated Learning for Privacy-Preserving AI
+# Blockchain-Enabled Federated Learning for Privacy‑Preserving AI
 
-> Implementation of the paper: *"Blockchain-Enabled Federated Learning for Privacy-Preserving AI"*  
-> Published at **IEEE ICISC-2025** | DOI: 10.1109/ICISC65841.2025.11187566
+High‑fidelity FL + Blockchain implementation with poisoning‑attack detection and recovery.  
+TTEH Research Lab – BFL Project  
+
+Badges:  
+_Implementation of the paper “Blockchain‑Enabled Federated Learning for Privacy‑Preserving AI” (ICISC‑2025). Refer to repository artifacts for full code and figures._
+
+---
+
+## Overview
+
+**Problem:** Centralized ML requires aggregating all data at a single server, which violates privacy, breaks regulations (GDPR/HIPAA), and creates a single point of failure. Federated Learning (FL) keeps data local but is still vulnerable to **poisoning attacks**, malicious clients, and unverifiable model updates.
+
+**Why traditional methods fail:**
+
+- Central servers see all raw data and become attractive attack targets.
+- Plain FL has no immutable audit trail; malicious clients can push poisoned updates without detection.
+- No built‑in notion of **trust** or proof that an update is honest.
+
+**Our solution (very clearly):** A three‑phase **Blockchain‑Enabled Federated Learning (BFL)** pipeline over MNIST:
+
+- **Phase 1:** Standard FedAvg CNN across 5 clients (no blockchain, no attacks).
+- **Phase 2:** Federated Learning + Ethereum private blockchain (Ganache) logging SHA‑256 hashes of client model weights via a Solidity smart contract.
+- **Phase 3:** BFL + **Differential Privacy** + **Trust Scoring** with an explicit poisoning attacker client, automatic attack detection, model reset, and recovery.
+
+The code generates all accuracy/trust/summary **figures** (`figure1_accuracy_trust.png`, `phase2_vs_phase3.png`, etc.) and comparison tables under the repository root.
+
+**Key models used:**
+
+- CNN classifier (TensorFlow/Keras) trained via FedAvg across 5 clients.
+- Trust mechanism based on **cosine similarity** between global and local weight vectors.
+
+**Final performance highlights:**
+
+- FedAvg / BFL without attack: ≈ **96.20%** final accuracy.
+- BFL with attacker + DP + trust scoring: recovers from **4.34%** (poisoned) to **96.78%** final accuracy after model reset.
+- Blockchain logs **50** on‑chain updates in Phase 2 and **61** in Phase 3 (with 1 malicious update effectively rejected).
+
+**Keywords:** AI · Cybersecurity · Federated Learning · Blockchain · Differential Privacy · Trust Scoring · Poisoning Attack Defense
 
 ---
 
 ## Table of Contents
 
-1. [Project Overview](#1-project-overview)
-2. [What This Project Does](#2-what-this-project-does)
-3. [System Architecture](#3-system-architecture)
-4. [Tech Stack](#4-tech-stack)
-5. [Dataset](#5-dataset)
-6. [Project Structure](#6-project-structure)
-7. [Installation & Setup](#7-installation--setup)
-8. [Implementation — Step by Step](#8-implementation--step-by-step)
-   - [Phase 1: Federated Learning Baseline](#phase-1-federated-learning-baseline)
-   - [Phase 2: Blockchain Integration](#phase-2-blockchain-integration)
-   - [Phase 3: Privacy + Attack Detection](#phase-3-privacy--attack-detection)
-9. [Results](#9-results)
-10. [How to Run](#10-how-to-run)
-11. [References](#11-references)
+1. Problem Statement  
+2. Proposed Architecture  
+3. How It Works  
+4. Results & Metrics  
+5. Code Architecture  
+6. Core Modules — Deep Dive  
+7. Setup & Usage  
+8. Implementation Results  
+9. Limitations  
+10. Team  
+11. Mentor  
 
 ---
 
-## 1. Project Overview
+## 1. Problem Statement
 
-This project implements a **Blockchain-Enabled Federated Learning (BFL)** system — a secure, privacy-preserving AI training framework where:
+> “Secure, privacy‑preserving federated learning must resist malicious clients, provide verifiable model updates, and maintain high accuracy under poisoning attacks.”
 
-- Multiple clients train an AI model **locally** on their own data
-- **Raw data is never shared** with anyone
-- Every model update is **logged on a blockchain** (Ethereum)
-- A **smart contract** verifies each update before it is accepted
-- **Malicious clients** sending fake/poisoned updates are automatically detected and blocked
-- **Differential Privacy** protects client weights from reverse engineering
+Traditional FL/Bare ML fails because:
 
-This directly implements the architecture described in the IEEE ICISC-2025 paper by Prajwalasimha S N et al.
+- **Privacy:** Centralized training requires raw data aggregation, breaking confidentiality and compliance.
+- **Security:** No tamper‑proof record of which client sent which update; attackers can inject poisoned gradients.
+- **Integrity & Trust:** Server cannot easily verify if a client behaved honestly without an external trust/consensus layer.
 
----
+**Why the problem exists:**
 
-## 2. What This Project Does
+- Networked/edge data (healthcare, IoT, cyber) is **distributed, high‑dimensional and evolving**, making central collection impractical.
+- Real deployments need **auditability** (who updated what, when) and **resilience** against adversarial updates.
 
-### The Problem
-Traditional Machine Learning requires all data to be sent to a central server. This:
-- Violates user privacy
-- Breaks regulations like GDPR and HIPAA
-- Creates a single point of attack
+**What is needed:**
 
-### The Solution (This Project)
-```
-Normal ML:                           This Project (BFL):
-─────────────────────                ──────────────────────────────────
-All data → Central Server            Data stays on each client
-Server trains model                  Each client trains locally
-Privacy violated                     Only model weights shared
-No attack detection                  Blockchain verifies every update
-No audit trail                       All updates permanently logged
-```
-
-### Simple Analogy
-```
-5 hospitals want to train an AI model together:
-
-Without BFL:  All patient records sent to one server → Privacy risk
-With BFL:     Each hospital trains locally → sends only learned weights
-              → blockchain records the submission
-              → fake submissions are blocked
-              → global model improves without anyone sharing data
-```
+- A **reproducible FL pipeline** that keeps data local but logs model updates immutably.
+- A **trust‑aware aggregation mechanism** that down‑weights or rejects suspicious clients.
+- **Privacy mechanisms** (Differential Privacy, optional ZKP) to protect client updates.
 
 ---
 
-## 3. System Architecture
+## 2. Proposed Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    BFL SYSTEM OVERVIEW                      │
-│                                                             │
-│   ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────┐    │
-│   │ Client 1 │  │ Client 2 │  │ Client 3 │  │ Client 4 │    │
-│   │ 12,000   │  │ 12,000   │  │ ATTACKER │  │ 12,000   │    │
-│   │ images   │  │ images   │  │ (poison) │  │ images   │    │
-│   └────┬─────┘  └────┬─────┘  └────┬─────┘  └────┬─────┘    │
-│        │              │              │              │       │
-│        └──────────────┼──────────────┼──────────────┘       │
-│                       ▼              │                      │
-│            ┌─────────────────────┐   │                      │
-│            │  Differential       │   │                      │
-│            │  Privacy (DP noise) │   │                      │
-│            └─────────┬───────────┘   │                      │
-│                      ▼               ▼                      │
-│            ┌─────────────────────────────────┐              │
-│            │   Ethereum Blockchain (Ganache) │              │
-│            │   ModelRegistry.sol             │              │
-│            │   SHA-256 hash logged on-chain  │              │
-│            │   Trust score computed          │              │
-│            │   Attacker REJECTED             │              │
-│            └─────────────────┬───────────────┘              │
-│                              ▼                              │
-│            ┌─────────────────────────────────┐              │
-│            │      Federated Server           │              │
-│            │      FedAvg Aggregation         │              │
-│            │      (honest updates only)      │              │
-│            └─────────────────────────────────┘              │
-└─────────────────────────────────────────────────────────────┘
-```
+**Fig. 1 — BFL System Architecture with Attack Detection**
 
-### Four Key Components
+This system trains a CNN on MNIST via FL, logs each client’s model hash on a private Ethereum blockchain, and uses a **trust score** to detect and isolate a poisoning attacker.
 
-| Component | Description | Implementation |
-|---|---|---|
-| Clients (x5) | Train model locally on private data | `client_train()` in Python |
-| Federated Server | Aggregates updates using FedAvg | `federated_average()` in Python |
-| Blockchain Network | Logs and verifies every update | Ganache + `ModelRegistry.sol` |
-| Trust Scoring (PoC) | Detects and rejects malicious clients | Cosine similarity scoring |
+| # | Module                     | Role                                             | Output                                   |
+|---|----------------------------|--------------------------------------------------|------------------------------------------|
+| 1 | Data Loader (MNIST)       | Load and normalize handwritten digits            | Local train/test tensors                 |
+| 2 | FL Core (Phase 1)         | FedAvg training across 5 clients                 | Baseline global model                    |
+| 3 | Blockchain Layer (Phase 2)| Deploy contract, hash weights, log updates       | On‑chain SHA‑256 hashes, round metadata  |
+| 4 | DP + Trust (Phase 3)      | Add DP noise, compute similarity and trust       | Per‑client trust scores per round        |
+| 5 | Attack Simulation         | Designate one client as malicious (poison weights)| Poisoned updates in early rounds        |
+| 6 | Aggregation & Reset Engine| FedAvg on trusted clients, reset on detection    | Clean global model after reset           |
+| 7 | Visualization & Reporting | Plot accuracy, trust decay, summary tables       | `*.png` graphs, printed metrics          |
 
 ---
 
-## 4. Tech Stack
+## 3. How It Works
 
-| Category | Tool | Purpose |
-|---|---|---|
-| Language | Python 3.x | Core implementation |
-| ML Framework | TensorFlow / Keras | CNN model training |
-| Math | NumPy | FedAvg, DP, trust scoring |
-| Blockchain | Ganache v7.9.2 | Local Ethereum network |
-| Smart Contract | Solidity 0.8.0 | ModelRegistry contract |
-| Web3 Bridge | Web3.py | Python ↔ Ethereum |
-| Compiler | py-solc-x | Compile Solidity in Python |
-| Graphs | Matplotlib | Result visualisation |
-| Dataset | MNIST (TensorFlow) | Handwritten digit images |
+### Decision Logic / Workflow
+
+High‑level logic for each **training round** in Phase 3:
+
+1. Server broadcasts current **global weights** to all 5 clients.  
+2. Each client trains locally on its MNIST shard.  
+3. Malicious client replaces its weights with random **poisoned weights**.  
+4. Each client adds **DP noise**, computes similarity to the previous global model, and gets an updated **trust score**.  
+5. If a client’s trust score `< trust_threshold (0.85)` ⇒ **REJECT** its update.  
+6. Accept only trusted updates, log their SHA‑256 hash to the blockchain, aggregate via FedAvg, and evaluate accuracy.  
+7. On first detection of attacker ⇒ **reset global model** to clean initial weights, then continue training only with honest clients.
+
+### Flow Diagram (text)
+
+Raw MNIST data  
+↓  
+Client‑side training (local CNN)  
+↓  
+DP noise + hash computation  
+↓  
+Blockchain submit (`submitUpdate`)  
+↓  
+Trust scoring & rejection  
+↓  
+FedAvg aggregation on honest updates  
+↓  
+Updated global model + metrics  
+
+### Core Equations
+
+**FedAvg aggregation (server):**
+
+\[
+w^{(t+1)} = \sum_{i=1}^{N} p_i w_i^{(t+1)}
+\]
+
+Where \(p_i = \frac{m_i}{\sum_j m_j}\) is the data proportion and \(w_i\) are client weights.
+
+**Differential Privacy noise (client, simplified):**
+
+\[
+w' = w + \mathcal{N}(0, \sigma^2),\quad \sigma = \frac{\text{sensitivity}}{\epsilon}
+\]
+
+With \(\epsilon = 100.0\) in the implementation.
+
+**Trust score update (Proof‑of‑Contribution):**
+
+\[
+T_i^{(t+1)} = \alpha T_i^{(t)} + (1-\alpha) S_i^{(t)},\quad \alpha = 0.9
+\]
+
+\(S_i^{(t)}\) is cosine similarity between flattened global and local weights.
 
 ---
 
-## 5. Dataset
+## 4. Results & Metrics
 
-### MNIST — Handwritten Digits
+This repository contains the following key artifacts:
 
-| Property | Value |
-|---|---|
-| Total images | 70,000 |
-| Training images | 60,000 (split across 5 clients) |
-| Test images | 10,000 (used for global evaluation) |
-| Image size | 28 × 28 pixels (grayscale) |
-| Classes | 10 (digits 0 through 9) |
-| File size | ~11 MB |
-| Source | Yann LeCun, NYU |
+- `phase2_vs_phase3.png` — BFL under poisoning attack (detection & recovery).
+- `figure1_accuracy_trust.png` — Accuracy vs round (Phase 2 vs Phase 3) + attacker trust score decay.
+- `figure2_comparison.png` — Final accuracy comparison across all three phases.
+- `figure3_blockchain_updates.png` — Number of verified on‑chain updates per phase.
+- `summary_table.png` — Metrics table (accuracy, updates, privacy, defense).
 
-### How data is split across clients
+### Phase‑wise Model Comparison
 
-```
-Total training data: 60,000 images
-─────────────────────────────────────
-Client 1  →  12,000 images  (honest)
-Client 2  →  12,000 images  (honest)
-Client 3  →  12,000 images  (ATTACKER — sends poisoned weights)
-Client 4  →  12,000 images  (honest)
-Client 5  →  12,000 images  (honest)
-```
+| Model / Phase              | Accuracy (final) | Notes                                     |
+|----------------------------|------------------|-------------------------------------------|
+| Phase 1 – FedAvg           | 0.9620           | Baseline FL without blockchain or attacks.|
+| Phase 2 – BFL (no attack)  | 0.9620           | Same accuracy, 50 on‑chain updates.       |
+| Phase 3 – BFL + DP + Trust | 0.9678           | Under attack; recovers and slightly improves.|
 
-No client ever sees another client's data. This is the core privacy guarantee of Federated Learning.
-
-> **Why MNIST?**  
-> MNIST is one of the three benchmark datasets used in the original paper (alongside CIFAR-10 and IoT-IDS). It trains fast enough to run 15 rounds in under 10 minutes, making it ideal for demonstrating the FL + blockchain mechanisms clearly.
+Exact round‑wise metrics are generated at runtime by `generate_results.py` and `final_report.py` and printed to console; re‑run these scripts to regenerate numbers and plots.
 
 ---
 
-## 6. Project Structure
+## 5. Code Architecture
 
-```
-bfl_project/
+```text
+project/
+├── code1.py                 # Phase 1 – FedAvg baseline
+├── bfl_phase2.py            # Phase 2 – BFL (hashes on blockchain)
+├── bfl_phase3.py            # Phase 3 – BFL + DP + Trust + attacker
+├── blockchain.py            # Web3 + Solidity helpers (deploy, submit, query)
 │
-├── fl_phase1.py                  
-├── bfl_phase2.py                
-├── bfl_phase3.py                 
+├── generate_results.py      # Accuracy/trust/blockchain plots + results table
+├── final_report.py          # Alternate plots and summary table
 │
-├── blockchain.py                 
-├── ModelRegistry.sol            
-│
-├── generate_results.py           
-│
-├── figure1_accuracy_trust.png    
-├── figure2_comparison.png        
-├── figure3_blockchain_updates.png 
-│
-├── project_report.md            
-└── README.md                    
+├── figure1_accuracy_trust.jpg
+├── phase2_vs_phase3.jpg
+└── Group_2_Blockchain-Enabled_Federated_Learning_for_Privacy-Preserving_AI-2.pdf
 ```
+
+The repository separates **training**, **blockchain interaction**, **attack/defense logic**, and **visualization**, mirroring the structure described in the reference paper.
 
 ---
 
-## 7. Installation & Setup
+## 6. Core Modules — Deep Dive
 
-### Prerequisites
-- Python 3.8 or above
-- Node.js (for Ganache)
-- Git (optional)
+### Federated Learning Baseline (Phase 1)
 
-### Step 1 — Install Ganache (local blockchain)
+**File path:** `code1.py`
+
+- Loads MNIST from TensorFlow, normalizes, and splits equally across 5 clients.
+- Defines a shared CNN model and implements **client‑side training** and **FedAvg aggregation**.
+- Runs `num_rounds=10` and prints loss/accuracy each round; final accuracy ≈ 96.2%.
+
+### Blockchain‑Secured FL (Phase 2)
+
+**File paths:** `bfl_phase2.py`, `blockchain.py`
+
+- Connects to local Ganache, compiles and deploys `ModelRegistry.sol` via `deploy_contract()`.
+- Each client, after training, calls `submit_update(contract, client_idx, weights, round_number)`:
+  - Flattens weight tensors, computes SHA‑256 hash, and sends it to the smart contract.
+- Server may call `get_verified_clients(contract, round)` to retrieve on‑chain records for that round.
+
+### DP + Trust Scoring + Attack Simulation (Phase 3)
+
+**File path:** `bfl_phase3.py`
+
+- `add_differential_privacy(weights, epsilon=100.0)` adds Gaussian noise before blockchain submission.
+- `compute_trust_score(global_weights, local_weights, prev_score, alpha=0.9)` returns updated trust score and cosine similarity.
+- `poison_weights(weights)` replaces attacker weights with random values to simulate poisoning.
+- `run_bfl_phase3(...)` orchestrates rounds, detects the malicious client once trust falls below threshold, resets model, and continues with honest clients only.
+
+### Visualization & Summary
+
+**File paths:** `generate_results.py`, `final_report.py`
+
+- Reconstruct Phase 2 & 3 accuracy curves from recorded values.
+- Plot attacker trust score decay vs rejection threshold.
+- Generate bar charts and tables summarizing:
+  - Final accuracy per phase.
+  - Total on‑chain updates per phase.
+  - Attack detection and privacy mechanisms.
+
+---
+
+## 7. Setup & Usage
+
+### Requirements
+
+| Component   | Value                          |
+|------------|---------------------------------|
+| Python     | 3.8+                           |
+| Libraries  | `tensorflow`, `numpy`, `matplotlib`, `web3`, `py-solc-x` |
+| Blockchain | Ganache (local Ethereum)       |
+| Dataset    | MNIST (auto‑downloaded by TensorFlow) |
+
+### Installation
+
 ```bash
-npm install -g ganache
-```
+git clone <REPO_URL>
+cd <REPO_ROOT>
 
-### Step 2 — Install Python dependencies
-```bash
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+
 pip install tensorflow numpy matplotlib web3 py-solc-x
-```
-
-### Step 3 — Install Solidity compiler
-```python
 python -c "from solcx import install_solc; install_solc('0.8.0')"
 ```
 
-### Step 4 — Start Ganache (keep this terminal open)
+Start Ganache (keep this terminal open):
+
 ```bash
 ganache --port 8545 --accounts 10 --deterministic
 ```
 
-You will see 10 wallet addresses appear. Your blockchain is now running locally at `http://127.0.0.1:8545`.
+### Run Project
 
----
+**Baseline FedAvg (Phase 1):**
 
-## 8. Implementation — Step by Step
-
----
-
-### Phase 1: Federated Learning Baseline
-
-**File:** `fl_phase1.py`  
-**Goal:** Train a digit classifier across 5 clients without sharing raw data
-
-#### What it does
-```
-1. Downloads MNIST dataset (auto via TensorFlow)
-2. Splits 60,000 images equally across 5 clients
-3. Each client trains a CNN locally for 2 epochs per round
-4. Server aggregates using FedAvg
-5. Repeats for 10 rounds
-6. Evaluates global model on 10,000 test images
-```
-
-#### Model Architecture (CNN)
-```
-Input: 28×28×1 image
-  ↓
-Conv2D (32 filters, 3×3) + ReLU    → detects edges and patterns
-  ↓
-MaxPooling2D                        → reduces size, keeps features
-  ↓
-Flatten                             → converts to 1D array
-  ↓
-Dense (64 units) + ReLU             → learns feature combinations
-  ↓
-Dense (10 units) + Softmax          → outputs probability for each digit
-```
-
-#### Key Formula — FedAvg
-```
-w_global = Σ (p_i × w_i)
-
-Where:
-  w_i  = client i's model weights after local training
-  p_i  = m_i / Σm_i  (proportion of data client i has)
-  w_global = new global model
-```
-
-#### Phase 1 Results
-```
-Round 1   →  Accuracy: 0.9086  | Loss: 0.3296
-Round 2   →  Accuracy: 0.9210  | Loss: 0.2714
-Round 3   →  Accuracy: 0.9299  | Loss: 0.2413
-Round 4   →  Accuracy: 0.9401  | Loss: 0.2120
-Round 5   →  Accuracy: 0.9450  | Loss: 0.1909
-Round 6   →  Accuracy: 0.9502  | Loss: 0.1777
-Round 7   →  Accuracy: 0.9537  | Loss: 0.1602
-Round 8   →  Accuracy: 0.9575  | Loss: 0.1471
-Round 9   →  Accuracy: 0.9599  | Loss: 0.1397
-Round 10  →  Accuracy: 0.9620  | Loss: 0.1292
-─────────────────────────────────────────────
-Final accuracy: 96.20%
-```
-
----
-
-### Phase 2: Blockchain Integration
-
-**File:** `bfl_phase2.py` + `blockchain.py` + `ModelRegistry.sol`  
-**Goal:** Log every model update on an Ethereum blockchain
-
-#### What it adds on top of Phase 1
-```
-After client trains locally:
-  1. SHA-256 hash of weights is computed
-  2. Hash is submitted to smart contract on Ganache
-  3. Smart contract logs: client address + hash + round + timestamp
-  4. Server reads verified updates from blockchain
-  5. Only verified updates go into FedAvg
-```
-
-#### Smart Contract (ModelRegistry.sol)
-```solidity
-struct ModelUpdate {
-    address client;      // who submitted
-    bytes32 updateHash;  // SHA-256 of weights
-    uint256 roundNumber; // which FL round
-    bool isVerified;     // passed verification?
-    uint256 timestamp;   // when submitted
-}
-
-function submitUpdate(bytes32 _updateHash, uint256 _roundNumber) public {
-    // Logs update permanently on blockchain
-    // Anyone can audit this record forever
-}
-```
-
-#### Phase 2 Results
-```
-Contract deployed at: 0xe78A0F7E598Cc8b0Bb87894B0F60dD2a88d6a8Ab
-
-Round 1  → 5 updates logged on-chain | Accuracy: 0.9086
-Round 2  → 5 updates logged on-chain | Accuracy: 0.9210
-...
-Round 10 → 5 updates logged on-chain | Accuracy: 0.9620
-─────────────────────────────────────────────────────────
-Total on-chain updates: 50 (5 clients × 10 rounds)
-Final accuracy: 96.20%
-Blockchain overhead: negligible impact on accuracy
-```
-
----
-
-### Phase 3: Privacy + Attack Detection
-
-**File:** `bfl_phase3.py`  
-**Goal:** Add Differential Privacy, Trust Scoring, and catch the malicious client
-
-#### Three new mechanisms added
-
-**A. Differential Privacy (DP)**
-```
-Before submitting to blockchain, each client adds Gaussian noise:
-
-w_private = w + N(0, sensitivity/epsilon)
-
-Where:
-  epsilon = 100.0  (privacy budget — higher = less noise)
-  N(0, σ) = random Gaussian noise
-
-Effect: Even if someone intercepts the weights, they cannot
-        reconstruct the original training data
-```
-
-**B. Trust Scoring — Proof of Contribution (PoC)**
-```
-Each round, client's trust score is updated:
-
-T_i(t+1) = α × T_i(t) + (1-α) × S_i(t)
-
-Where:
-  α = 0.9  (decay factor — keeps history)
-  S_i(t) = cosine similarity between client update and global model
-
-Cosine similarity:
-  S = dot(w_global, w_local) / (||w_global|| × ||w_local||)
-
-  Honest client:  S ≈ 0.9–1.0  (update aligned with global model)
-  Attacker:       S ≈ 0.000    (poisoned weights completely unrelated)
-
-Rejection rule:
-  if T_i < 0.85 → REJECT client
-```
-
-**C. Attack Simulation**
-```
-Client 3 is designated as the attacker:
-  Instead of real weights → sends random noise × 10
-
-  poison_weights = [random.randn(shape) × 10 for each layer]
-
-  This simulates a real-world data poisoning attack
-```
-
-#### Round-by-Round Timeline
-```
-Round 1:
-  Client 3 [ATTACKER] trust = 0.900 → ACCEPTED (not caught yet)
-  All 5 clients accepted
-  Accuracy: 0.0434 (model corrupted by poison)
-
-Round 2:
-  Client 3 [ATTACKER] trust = 0.810 → REJECTED ← caught here!
-  Global model RESET to clean state
-  Accepted: [Client 1, 2, 4, 5]
-
-Round 3:
-  Client 3 trust = 0.729 → REJECTED
-  Recovery begins with 4 clean clients
-  Accuracy: 0.9059 ← jumps back immediately
-
-Round 4:  Accuracy: 0.9232
-Round 5:  Accuracy: 0.9344
-Round 7:  Accuracy: 0.9471
-Round 10: Accuracy: 0.9547
-Round 15: Accuracy: 0.9678 ← final
-
-Attacker trust score: 1.0 → 0.900 → 0.810 → ... → 0.206
-(permanently flagged, rejected every round)
-```
-
-#### Phase 3 Results
-```
-Contract deployed at: 0x9561C133DD8580860B6b7E504bC5Aa500f0f06a7
-
-Round 1  → All 5 accepted  | Accuracy: 0.0434 (poisoned)
-Round 2  → Attacker REJECTED | Model RESET
-Round 3  → 4 clients only  | Accuracy: 0.9059
-Round 5  → 4 clients only  | Accuracy: 0.9344
-Round 10 → 4 clients only  | Accuracy: 0.9547
-Round 15 → 4 clients only  | Accuracy: 0.9678
-──────────────────────────────────────────────
-Total on-chain updates: 61
-Attacker final trust score: 0.206
-Final accuracy: 96.78%
-```
-
----
-
-## 9. Results
-
-### Accuracy Comparison Across All Phases
-
-| Round | Phase 1 (FedAvg) | Phase 2 (BFL) | Phase 3 (BFL+DP+Trust) |
-|-------|-----------------|---------------|------------------------|
-| 1     | 0.9086          | 0.9086        | 0.0434 (attacked)      |
-| 2     | 0.9210          | 0.9210        | — (model reset)        |
-| 3     | 0.9299          | 0.9299        | 0.9059 (recovered)     |
-| 5     | 0.9450          | 0.9450        | 0.9344                 |
-| 7     | 0.9537          | 0.9537        | 0.9471                 |
-| 10    | 0.9620          | 0.9620        | 0.9547                 |
-| 15    | —               | —             | 0.9678                 |
-
-### Final Summary Table
-
-| Metric | Phase 1 (FedAvg) | Phase 2 (BFL) | Phase 3 (BFL+DP+Trust) |
-|--------|-----------------|---------------|------------------------|
-| Final accuracy | 96.20% | 96.20% | **96.78%** |
-| Attack detected | No | No | **Yes — Round 2** |
-| Attacker trust score | N/A | N/A | **0.206 (rejected)** |
-| On-chain updates | 0 | 50 | **61** |
-| Privacy mechanism | None | SHA-256 hash | **DP + Trust scoring** |
-| Raw data shared | No | No | No |
-| Rounds | 10 | 10 | 15 |
-
-### Comparison with Paper Results
-
-| Metric | Paper (BFL) | Our Implementation |
-|--------|-------------|-------------------|
-| MNIST accuracy | 99.2% | 96.78% |
-| Attack resilience | 92.8% | Attacker blocked round 2 |
-| Privacy mechanism | HE + ZKP + DP | DP + Trust scoring |
-| Blockchain | Ethereum PoC | Ganache (local Ethereum) |
-| Clients | 100 | 5 |
-
-> Note: The paper used 100 clients on cloud hardware (NVIDIA Tesla V100). Our implementation uses 5 clients on a local machine, which explains the accuracy difference. The core mechanisms are identical.
-
-### Attacker Trust Score Decay
-
-```
-Round  0:  Trust = 1.000  (starting value)
-Round  1:  Trust = 0.900  ACCEPTED  (first poison — not caught yet)
-Round  2:  Trust = 0.810  REJECTED  ← blocked from here onwards
-Round  3:  Trust = 0.729  REJECTED
-Round  4:  Trust = 0.656  REJECTED
-Round  5:  Trust = 0.590  REJECTED
-Round  6:  Trust = 0.531  REJECTED
-Round  7:  Trust = 0.478  REJECTED
-Round  8:  Trust = 0.431  REJECTED
-Round  9:  Trust = 0.388  REJECTED
-Round 10:  Trust = 0.349  REJECTED
-Round 15:  Trust = 0.206  REJECTED  (permanently flagged)
-```
-
----
-
-## 10. How to Run
-
-### Step 1 — Start Ganache (Terminal 1, keep open)
 ```bash
-ganache --port 8545 --accounts 10 --deterministic
+python code1.py
 ```
 
-### Step 2 — Run Phase 1 (Terminal 2)
-```bash
-cd bfl_project
-python fl_phase1.py
-```
-Expected output: Accuracy climbing from ~0.90 to ~0.96 over 10 rounds
+**BFL with Blockchain (Phase 2):**
 
-### Step 3 — Run Phase 2
 ```bash
 python bfl_phase2.py
 ```
-Expected output: Smart contract deployed, 50 on-chain updates logged
 
-### Step 4 — Run Phase 3
+**BFL + DP + Trust + Attack (Phase 3):**
+
 ```bash
 python bfl_phase3.py
 ```
-Expected output: Attacker caught at round 2, model recovers, 96.78% final accuracy
 
-### Step 5 — Generate result graphs
+**Generate plots and summary tables:**
+
 ```bash
 python generate_results.py
+python final_report.py
 ```
-Expected output: 3 PNG graph files saved in project folder
 
-### Common Errors and Fixes
-
-| Error | Fix |
-|---|---|
-| `ConnectionRefusedError` | Ganache not running — restart Terminal 1 |
-| `ModuleNotFoundError: web3` | Run `pip install web3` |
-| `FileNotFoundError: ModelRegistry.sol` | Run from inside `bfl_project/` folder |
-| `SolcError` | Run `python -c "from solcx import install_solc; install_solc('0.8.0')"` |
-| TensorFlow GPU warning | Safe to ignore on Windows — CPU training works fine |
+All images will be saved as `*.png` / `*.jpg` in the repo root for direct embedding in your GitHub README or report.
 
 ---
 
-## 11. References
+## 8. Implementation Results
 
-1. Prajwalasimha S N, Nilesh Shelke, et al., *"Blockchain-Enabled Federated Learning for Privacy-Preserving AI"*, IEEE ICISC-2025, DOI: 10.1109/ICISC65841.2025.11187566
+**Training explanation:**  
+Each phase performs multiple global rounds; clients train locally for a few epochs per round, and the server aggregates via FedAvg.
 
-2. McMahan, H. B., Moore, E., Ramage, D., et al., *"Communication-Efficient Learning of Deep Networks from Decentralized Data"*, AISTATS 2017. (FedAvg algorithm)
+**Attack behavior:**  
+In Phase 3, accuracy collapses to ~4.34% in Round 1 due to the poisoned attacker update, then recovers once the attacker is detected and the model is reset.
 
-3. Wei, K., Li, J., Ding, M., et al., *"Federated Learning with Differential Privacy: Algorithms and Performance Analysis"*, IEEE Transactions on Information Forensics and Security, 2020.
+**Confusion / performance visuals:**
 
-4. LeCun, Y., Cortes, C., & Burges, C., *"The MNIST Database of Handwritten Digits"*, 1998. http://yann.lecun.com/exdb/mnist/
+- `phase2_vs_phase3.png` clearly shows detection at Round 2 and recovery in accuracy.
+- `figure1_accuracy_trust.png` overlays trust decay with the attack detection threshold.
 
-5. Ethereum Foundation, *Solidity Documentation v0.8.0*, 2021. https://docs.soliditylang.org
+**Blockchain statistics:**
 
----
+- Phase 2: 50 on‑chain updates (5 clients × 10 rounds).
+- Phase 3: 61 updates with the attacker effectively rejected by trust scoring.
 
-## Key Concepts Glossary
+_Image placeholders you can keep in README:_
 
-| Term | Meaning |
-|---|---|
-| **Federated Learning (FL)** | Training AI across multiple devices without sharing raw data |
-| **FedAvg** | Algorithm to combine model updates using weighted average |
-| **Blockchain** | Permanent, tamper-proof ledger of transactions |
-| **Smart Contract** | Self-executing code on the blockchain |
-| **Ganache** | Local Ethereum blockchain for development |
-| **Differential Privacy (DP)** | Adding controlled noise to protect data from reverse engineering |
-| **Trust Score** | A score tracking how honest a client's contributions are |
-| **Cosine Similarity** | Measures direction similarity between two vectors (0 = unrelated, 1 = identical) |
-| **Proof of Contribution (PoC)** | Consensus mechanism rewarding honest updates |
-| **Data Poisoning Attack** | Malicious client sends fake weights to corrupt global model |
-| **SHA-256** | Cryptographic hash function used to fingerprint model weights |
-| **Web3.py** | Python library to communicate with Ethereum blockchain |
+- BFL under poisoning attack — `phase2_vs_phase3.jpg`  
+- Accuracy vs trust decay — `figure1_accuracy_trust.jpg`
 
 ---
 
-*Built as implementation of IEEE ICISC-2025 paper | Dayananda Sagar University*
+## 9. Limitations
+
+| Paper Concept / Claim                    | Prototype Status                                        | Possible Fix / Extension                                  |
+|-----------------------------------------|---------------------------------------------------------|-----------------------------------------------------------|
+| Multiple datasets (MNIST, CIFAR‑10, IoT)| Prototype uses MNIST only                               | Add CIFAR‑10 and an IoT‑IDS dataset loaders              |
+| ZKP‑based verification / PoC tokens     | Trust via cosine similarity; no real ZKP or token economy| Integrate ZKP libraries and ERC‑20 rewards               |
+| Adaptive consensus (PoC, PoA, etc.)     | Uses simple Ganache network with basic verification     | Implement real PoC/PoA chain or IBFT/PoS testnet         |
+| Full production metrics (latency, energy)| Current focus is accuracy and trust plots               | Instrument runtime, gas usage, latency stats             |
+
+---
+
+## 10. Team
+
+| Name           | USN        | Email                              |
+|----------------|------------|------------------------------------|
+| Vaishnavi Shri | ENG23CY0046| vaishnavi18shri@gmail.com         |
+| Atif Rahim     | ENG23CY0053| atif.rahim1104@gmail.com          |
+| Tilak Moger    | ENG23CY0041| tilakkm20225@gmail.com            |
+| Aman Kumar     | ENG23CY0051| amangupta6299@gmail.com           |
+
+---
+
+## 11. Mentor
+
+**Dr. Prajwalasimha S N**  
+Associate Professor, Department of Computer Science and Engineering (Cyber Security)  
+School of Engineering, Dayananda Sagar University, Bengaluru, India  
+Email: [prajwalasimha.sn1@gmail.com](mailto:prajwalasimha.sn1@gmail.com)
