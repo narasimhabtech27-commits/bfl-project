@@ -11,19 +11,15 @@
 ![MNIST](https://img.shields.io/badge/Dataset-MNIST-brightgreen?style=flat)
 ![License](https://img.shields.io/badge/License-MIT-blue?style=flat)
 
-> *Based on the IEEE ICISC-2025 paper: "Blockchain-Enabled Federated Learning for Privacy-Preserving AI"*
-> *by Prajwalasimha S N, Nilesh Shelke, Dilip Kumar Saini, Amit Pimpalkar, G Hemanth Kumar, Monish L*
-> *DOI: 10.1109/ICISC65841.2025.11187566*
-
 ---
 
 ## Overview
 
-**Problem:** Traditional Machine Learning requires all training data to be sent to a central server — violating user privacy, breaking regulations like GDPR and HIPAA, and creating a single point of attack.
+**Problem:** Traditional Machine Learning requires all training data to be sent to a central server  violating user privacy, breaking regulations like GDPR and HIPAA, and creating a single point of attack.
 
 **Why traditional FL fails:** Standard Federated Learning (FL) solves the data-sharing problem but remains vulnerable to malicious clients who submit poisoned model updates, free-riders who contribute nothing, and unverifiable contributions with no audit trail.
 
-**Our solution:** A Blockchain-Enabled Federated Learning (BFL) system that trains a digit-recognition CNN across 5 private clients using Federated Averaging (FedAvg), logs every model update as an immutable transaction on a local Ethereum blockchain (Ganache) via a Solidity smart contract, applies Differential Privacy noise to protect client weights, and uses a Proof-of-Contribution (PoC) trust scoring mechanism to automatically detect and permanently block malicious clients — all without any raw data ever leaving a client.
+**Our solution:** A Blockchain-Enabled Federated Learning (BFL) system that trains a digit-recognition CNN across 5 private clients using Federated Averaging (FedAvg), logs every model update as an immutable transaction on a local Ethereum blockchain (Ganache) via a Solidity smart contract, applies Differential Privacy noise to protect client weights, and uses a Proof-of-Contribution (PoC) trust scoring mechanism to automatically detect and permanently block malicious clients  all without any raw data ever leaving a client.
 
 **Key models used:** CNN (primary classifier), FedAvg (aggregation), Cosine Similarity Trust Scoring (PoC), Ethereum Smart Contract (ModelRegistry.sol).
 
@@ -52,13 +48,11 @@
 10. [Limitations & Future Work](#10-limitations--future-work)
 11. [Team](#11-team)
 12. [Mentor](#12-mentor)
-13. [References](#13-references)
+
 
 ---
 
 ## 1. Problem Statement
-
-> *"Training AI models collaboratively across distributed clients requires mechanisms that guarantee data privacy, verify honest contributions, and resist adversarial manipulation — none of which standard Federated Learning provides."*
 
 ### Why traditional methods fail
 
@@ -260,8 +254,8 @@ Test Set  →  10,000 images  (server only — never shared)
 ### Why MNIST?
 
 - One of three benchmark datasets in the original paper (alongside CIFAR-10 and IoT-IDS)
-- Trains fast — one round completes in ~30 seconds on CPU
-- Universal recognition — 96%+ accuracy is immediately meaningful to any examiner
+- Trains fast one round completes in ~30 seconds on CPU
+- Universal recognition 96%+ accuracy is immediately meaningful to any examiner
 - Simple enough to keep focus on blockchain + privacy mechanisms, not dataset complexity
 
 ---
@@ -321,7 +315,6 @@ Round 15:  Trust = 0.206   REJECTED  (permanently flagged)
 | Number of clients | 100 | 5 |
 | Hardware | NVIDIA Tesla V100 GPU | Local CPU (Windows) |
 
-> The paper used 100 clients on cloud GPU hardware. Our implementation with 5 clients on local CPU achieves the same core results, demonstrating all mechanisms correctly.
 
 ### Performance Graphs
 
@@ -397,19 +390,19 @@ w_global = sum(p_i * w_i)    where p_i = m_i / sum(m_i)
 **Smart contract structure:**
 ```solidity
 struct ModelUpdate {
-    address client;       // Ethereum wallet of submitting client
-    bytes32 updateHash;   // SHA-256 of model weights
-    uint256 roundNumber;  // which FL round (1-10 or 1-15)
-    bool isVerified;      // passed smart contract check
-    uint256 timestamp;    // block timestamp
+    address client;       
+    bytes32 updateHash;   
+    uint256 roundNumber;  
+    bool isVerified;      
+    uint256 timestamp;    
 }
 ```
 
 **Key functions:**
 ```solidity
-submitUpdate(bytes32 hash, uint256 round)   // client calls this
-getVerifiedUpdates(uint256 round)           // server calls this
-getTotalUpdates()                           // audit total submissions
+submitUpdate(bytes32 hash, uint256 round)   
+getVerifiedUpdates(uint256 round)           
+getTotalUpdates()                           
 ```
 
 ---
@@ -467,7 +460,7 @@ def poison_weights(weights):
 
 ### Result Generation (`generate_results.py`)
 
-**What it does:** Reads your experimental output and produces 3 publication-quality graphs using matplotlib — accuracy comparison chart, attacker trust score decay with rejection threshold, bar charts comparing phases and on-chain update counts.
+**What it does:** Reads your experimental output and produces 3 publication-quality graphs using matplotlib accuracy comparison chart, attacker trust score decay with rejection threshold, bar charts comparing phases and on-chain update counts.
 
 ---
 
@@ -561,7 +554,7 @@ On-chain updates: 0
 ### Phase 2: Blockchain Integration
 
 **Files:** `bfl_phase2.py`, `blockchain.py`, `ModelRegistry.sol`
-**Goal:** Log every model update permanently on Ethereum — full tamper-proof audit trail.
+**Goal:** Log every model update permanently on Ethereum full tamper-proof audit trail.
 
 **What is added:**
 - `ModelRegistry.sol` compiled and deployed to Ganache on startup
