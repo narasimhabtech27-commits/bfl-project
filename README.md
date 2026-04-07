@@ -640,50 +640,11 @@ Total on-chain updates: 61
 
 | Name | USN | Email |
 |---|---|---|
-| Narasimha Murthy | [Your USN] | [Your Email] |
-| [Team Member 2] | [USN] | [Email] |
-| [Team Member 3] | [USN] | [Email] |
-| [Team Member 4] | [USN] | [Email] |
-
----
-
-## 12. Mentor
-
-**Dr. Prajwalasimha S N**
-
-Associate Professor, Department of Computer Science and Engineering (Cyber Security)
-School of Engineering, Dayananda Sagar University, Bangalore — 562112
-
-Email: prajwasimha.sn1@gmail.com
-
----
-
-## 13. References
-
-1. Prajwalasimha S N, Nilesh Shelke, Dilip Kumar Saini, Amit Pimpalkar, G Hemanth Kumar, Monish L,
-   *"Blockchain-Enabled Federated Learning for Privacy-Preserving AI"*,
-   IEEE ICISC-2025, DOI: 10.1109/ICISC65841.2025.11187566
-
-2. McMahan, H. B., Moore, E., Ramage, D., Hampson, S., Arcas, B. A.,
-   *"Communication-Efficient Learning of Deep Networks from Decentralized Data"*,
-   AISTATS 2017.
-
-3. Wei, K., Li, J., Ding, M., Ma, C., Yang, H. H., Farokhi, F.,
-   *"Federated Learning with Differential Privacy: Algorithms and Performance Analysis"*,
-   IEEE Transactions on Information Forensics and Security, vol. 15, pp. 3454–3469, 2020.
-
-4. Pop, C. D., Antal, M., Cioara, T., Anghel, I., Salomie, I.,
-   *"Blockchain and Demand Response: Zero-Knowledge Proofs for Energy Transactions Privacy"*,
-   Sensors, vol. 20, p. 5678, 2020.
-
-5. LeCun, Y., Cortes, C., Burges, C.,
-   *"The MNIST Database of Handwritten Digits"*, 1998.
-   http://yann.lecun.com/exdb/mnist/
-
-6. Ethereum Foundation, Solidity Documentation v0.8.0, 2021.
-   https://docs.soliditylang.org
-
-7. Web3.py Documentation — https://web3py.readthedocs.io
+| Aman Nayan | ENG23CY0004 | amannayan1905@gmail.com |
+| Kushal M G | ENG23CY0022 | eng23cy0022@dsu.edu.in |
+| Likith M | ENG23CY0023 | eng23cy0022@dsu.edu.in |
+| Madhukar N | ENG23CY0024 | madhukarnagaraju8050@gmail.com |
+| Narasimha Murthy K | ENG23CY0026 | narasimhabtech27@gmail.com |
 
 ---
 
@@ -707,5 +668,15 @@ Email: prajwasimha.sn1@gmail.com
 
 ---
 
-*Blockchain-Enabled Federated Learning | IEEE ICISC-2025 Implementation*
-*Dayananda Sagar University, Bangalore — Department of CSE (Cyber Security)*
+##  Mentor
+
+**Dr. Prajwalasimha S N**
+
+Associate Professor, Department of Computer Science and Engineering (Cyber Security)
+School of Engineering, Dayananda Sagar University, Bangalore — 562112
+
+Email: prajwasimha.sn1@gmail.com
+
+---
+
+
