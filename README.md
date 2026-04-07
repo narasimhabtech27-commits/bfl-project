@@ -28,11 +28,11 @@
 **Key models used:** CNN (primary classifier), FedAvg (aggregation), Cosine Similarity Trust Scoring (PoC), Ethereum Smart Contract (ModelRegistry.sol).
 
 **Final performance highlights:**
-- ✅ **96.78% accuracy** on MNIST test set (10,000 images)
-- ✅ **Malicious attacker detected and blocked at Round 2**
-- ✅ **61 tamper-proof on-chain transactions** recorded
-- ✅ **Model recovered to 90.59% in one round** after attacker removal
-- ✅ **Zero raw data shared** across all 15 training rounds
+-  **96.78% accuracy** on MNIST test set (10,000 images)
+-  **Malicious attacker detected and blocked at Round 2**
+   **61 tamper-proof on-chain transactions** recorded
+-  **Model recovered to 90.59% in one round** after attacker removal
+-  **Zero raw data shared** across all 15 training rounds
 
 **Keywords:** Federated Learning · Blockchain · Privacy-Preserving AI · Ethereum · Differential Privacy · Smart Contracts · Proof-of-Contribution · Data Poisoning · MNIST · Cybersecurity
 
@@ -91,36 +91,36 @@
 ┌──────────────────────────────────────────────────────────────────┐
 │                    BFL SYSTEM ARCHITECTURE                       │
 │                                                                  │
-│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐  │
-│  │Client 1 │ │Client 2 │ │Client 3 │ │Client 4 │ │Client 5 │  │
-│  │ 12,000  │ │ 12,000  │ │ATTACKER │ │ 12,000  │ │ 12,000  │  │
-│  │ images  │ │ images  │ │(poison) │ │ images  │ │ images  │  │
-│  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘  │
-│       └───────────┴───────────┴───────────┴───────────┘        │
+│  ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐ ┌─────────┐     │
+│  │Client 1 │ │Client 2 │ │Client 3 │ │Client 4 │ │Client 5 │     │  
+│  │ 12,000  │ │ 12,000  │ │ATTACKER │ │ 12,000  │ │ 12,000  │     │
+│  │ images  │ │ images  │ │(poison) │ │ images  │ │ images  │     │
+│  └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘ └────┬────┘     │
+│       └───────────┴───────────┴───────────┴───────────┘          │
 │                               │                                  │
-│              ┌────────────────▼──────────────────┐              │
-│              │      Differential Privacy          │              │
-│              │   w_private = w + N(0, sigma)      │              │
-│              └────────────────┬──────────────────┘              │
+│              ┌────────────────▼──────────────────┐               │
+│              │      Differential Privacy         │               │
+│              │   w_private = w + N(0, sigma)     │               │
+│              └────────────────┬──────────────────┘               │
 │                               │                                  │
-│              ┌────────────────▼──────────────────┐              │
-│              │   Ethereum Blockchain (Ganache)    │              │
-│              │   ModelRegistry.sol                │              │
-│              │   SHA-256 hash logged on-chain     │              │
-│              │   Client address + timestamp saved │              │
-│              └────────────────┬──────────────────┘              │
+│              ┌────────────────▼──────────────────┐               │
+│              │   Ethereum Blockchain (Ganache)   │               │
+│              │   ModelRegistry.sol               │               │
+│              │   SHA-256 hash logged on-chain    │               │
+│              │   Client address + timestamp saved│               │
+│              └────────────────┬──────────────────┘               │
 │                               │                                  │
-│              ┌────────────────▼──────────────────┐              │
-│              │   Trust Scoring — PoC              │              │
-│              │   T_i = alpha*T_i + (1-alpha)*S_i  │              │
-│              │   if T_i < 0.85 → REJECT           │              │
-│              └────────────────┬──────────────────┘              │
+│              ┌────────────────▼──────────────────┐               │
+│              │   Trust Scoring — PoC             │               │
+│              │   T_i = alpha*T_i + (1-alpha)*S_i │               │
+│              │   if T_i < 0.85 → REJECT          │               │
+│              └────────────────┬──────────────────┘               │
 │                               │                                  │
-│              ┌────────────────▼──────────────────┐              │
-│              │   Federated Server — FedAvg        │              │
-│              │   w = sum(p_i * w_i)               │              │
-│              │   honest clients only              │              │
-│              └───────────────────────────────────┘              │
+│              ┌────────────────▼──────────────────┐               │
+│              │   Federated Server — FedAvg       │               │
+│              │   w = sum(p_i * w_i)              │               │
+│              │   honest clients only             │               │
+│              └───────────────────────────────────┘               │
 └──────────────────────────────────────────────────────────────────┘
 ```
 
