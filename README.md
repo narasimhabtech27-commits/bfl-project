@@ -1,5 +1,4 @@
-# Blockchain-Enabled Federated Learning — BFL System
-### Secure, Privacy-Preserving AI Training with Decentralized Verification
+# Blockchain-Enabled_Federated_Learning_for_Privacy-Preserving_AI
 
 > **Dayananda Sagar University | Department of Computer Science & Engineering (Cyber Security)**
 
@@ -42,12 +41,12 @@
 4. [Dataset](#4-dataset)
 5. [Results & Metrics](#5-results--metrics)
 6. [Code Architecture](#6-code-architecture)
-7. [Core Modules — Deep Dive](#7-core-modules--deep-dive)
+7. [Core Modules - Deep Dive](#7-core-modules--deep-dive)
 8. [Setup & Usage](#8-setup--usage)
-9. [Implementation — Phase by Phase](#9-implementation--phase-by-phase)
+9. [Implementation - Phase by Phase](#9-implementation--phase-by-phase)
 10. [Limitations & Future Work](#10-limitations--future-work)
 11. [Team](#11-team)
-12. [Mentor](#12-mentor)
+ [Mentor](#12-mentor)
 
 
 ---
@@ -58,14 +57,14 @@
 
 | Method | Limitation |
 |---|---|
-| Centralized ML | All raw data sent to one server — complete privacy violation |
-| Standard FL (FedAvg) | No verification of client updates — malicious clients corrupt the global model |
+| Centralized ML | All raw data sent to one server complete privacy violation |
+| Standard FL (FedAvg) | No verification of client updates malicious clients corrupt the global model |
 | FL with encryption only | No audit trail, no accountability, free-rider problem unsolved |
 | Signature-based IDS | Cannot detect novel poisoning attack patterns |
 
 ### Why the problem exists
 
-- Federated Learning clients are untrusted — any device can submit arbitrary weight updates
+- Federated Learning clients are untrusted any device can submit arbitrary weight updates
 - There is no central authority to verify contributions in a decentralized system
 - Model poisoning attacks (sending large random noise as weights) can destroy global model accuracy within a single round
 - No existing lightweight mechanism simultaneously provides: privacy + verification + accountability + attack resilience
@@ -105,13 +104,13 @@
 │              └────────────────┬──────────────────┘               │
 │                               │                                  │
 │              ┌────────────────▼──────────────────┐               │
-│              │   Trust Scoring — PoC             │               │
+│              │   Trust Scoring - PoC             │               │
 │              │   T_i = alpha*T_i + (1-alpha)*S_i │               │
 │              │   if T_i < 0.85 → REJECT          │               │
 │              └────────────────┬──────────────────┘               │
 │                               │                                  │
 │              ┌────────────────▼──────────────────┐               │
-│              │   Federated Server — FedAvg       │               │
+│              │   Federated Server - FedAvg       │               │
 │              │   w = sum(p_i * w_i)              │               │
 │              │   honest clients only             │               │
 │              └───────────────────────────────────┘               │
@@ -204,7 +203,7 @@ w_private = w + N(0, sensitivity / epsilon)
 epsilon = 100.0,  sensitivity = 1.0,  noise_scale = 0.01
 ```
 
-**Trust Score — Proof of Contribution:**
+**Trust Score Proof of Contribution:**
 ```
 S_i(t)   = dot(w_global, w_local) / (||w_global|| * ||w_local||)
 T_i(t+1) = 0.9 * T_i(t) + 0.1 * S_i(t)
@@ -220,7 +219,7 @@ A = Correct Predictions / Total Predictions
 
 ## 4. Dataset
 
-### MNIST — Handwritten Digit Recognition
+### MNIST - Handwritten Digit Recognition
 
 | Property | Value |
 |---|---|
@@ -232,7 +231,7 @@ A = Correct Predictions / Total Predictions
 | Colour | Grayscale (0 = black, 255 = white, normalized to 0.0–1.0) |
 | Classes | 10 (digits 0 through 9) |
 | File size | ~11 MB |
-| Source | Yann LeCun, Corinna Cortes — NYU |
+| Source | Yann LeCun, Corinna Cortes - NYU |
 | Download | Automatic via tf.keras.datasets.mnist.load_data() |
 
 ### How Data is Split Across Clients
@@ -242,11 +241,11 @@ Total Training Images: 60,000
 ──────────────────────────────────────────
 Client 1  →  12,000 images  (honest)
 Client 2  →  12,000 images  (honest)
-Client 3  →  12,000 images  (ATTACKER — sends poisoned weights)
+Client 3  →  12,000 images  (ATTACKER - sends poisoned weights)
 Client 4  →  12,000 images  (honest)
 Client 5  →  12,000 images  (honest)
 ──────────────────────────────────────────
-Test Set  →  10,000 images  (server only — never shared)
+Test Set  →  10,000 images  (server only - never shared)
 ```
 
 > No client ever sees another client's images. This is the core privacy guarantee.
@@ -264,10 +263,10 @@ Test Set  →  10,000 images  (server only — never shared)
 
 ### Accuracy Across All Phases
 
-| Round | Phase 1 — FedAvg | Phase 2 — BFL | Phase 3 — BFL+DP+Trust |
+| Round | Phase 1 - FedAvg | Phase 2 - BFL | Phase 3 - BFL+DP+Trust |
 |-------|-----------------|---------------|------------------------|
 | 1     | 0.9086          | 0.9086        | 0.0434  (attacked)     |
-| 2     | 0.9210          | 0.9210        | —  (model reset)       |
+| 2     | 0.9210          | 0.9210        | -  (model reset)       |
 | 3     | 0.9299          | 0.9299        | 0.9059  (recovered)    |
 | 4     | 0.9401          | 0.9401        | 0.9232                 |
 | 5     | 0.9450          | 0.9450        | 0.9344                 |
@@ -276,14 +275,14 @@ Test Set  →  10,000 images  (server only — never shared)
 | 8     | 0.9575          | 0.9575        | 0.9503                 |
 | 9     | 0.9599          | 0.9599        | 0.9551                 |
 | 10    | 0.9620          | 0.9620        | 0.9547                 |
-| 15    | —               | —             | **0.9678**             |
+| 15    | -               | -             | **0.9678**             |
 
 ### Final Summary Table
 
-| Metric | Phase 1 — FedAvg | Phase 2 — BFL | Phase 3 — BFL+DP+Trust |
+| Metric | Phase 1 - FedAvg | Phase 2 - BFL | Phase 3 - BFL+DP+Trust |
 |--------|-----------------|---------------|------------------------|
 | Final accuracy | 96.20% | 96.20% | **96.78%** |
-| Attack detected | No | No | **Yes — Round 2** |
+| Attack detected | No | No | **Yes - Round 2** |
 | Attacker final trust | N/A | N/A | **0.206 (rejected)** |
 | On-chain updates | 0 | 50 | **61** |
 | Privacy mechanism | None | SHA-256 hash | **DP + Trust scoring** |
@@ -363,7 +362,7 @@ bfl_project/
 
 ---
 
-## 7. Core Modules — Deep Dive
+## 7. Core Modules - Deep Dive
 
 ### Federated Learning Core (`fl_phase1.py`)
 
@@ -393,7 +392,7 @@ w_global = sum(p_i * w_i)    where p_i = m_i / sum(m_i)
 
 **Files:** `blockchain.py`, `ModelRegistry.sol`
 
-**What it does:** Connects Python to local Ethereum blockchain (Ganache) using Web3.py. Compiles and deploys the Solidity smart contract. Each client submits a SHA-256 fingerprint of their weights — permanently logged on-chain with client address, round number, and timestamp.
+**What it does:** Connects Python to local Ethereum blockchain (Ganache) using Web3.py. Compiles and deploys the Solidity smart contract. Each client submits a SHA-256 fingerprint of their weights - permanently logged on-chain with client address, round number, and timestamp.
 
 **Smart contract structure:**
 ```solidity
@@ -430,7 +429,7 @@ noise   = 0.01 per weight value
 
 ---
 
-### Trust Scoring — Proof of Contribution (`bfl_phase3.py`)
+### Trust Scoring - Proof of Contribution (`bfl_phase3.py`)
 
 **Function:** `compute_trust_score(global_weights, local_weights, prev_score)`
 
@@ -502,12 +501,12 @@ python -c "from solcx import install_solc; install_solc('0.8.0')"
 
 ### Run Project
 
-**Terminal 1 — Start blockchain (keep this open throughout):**
+**Terminal 1 - Start blockchain (keep this open throughout):**
 ```bash
 ganache --port 8545 --accounts 10 --deterministic
 ```
 
-**Terminal 2 — Run each phase in order:**
+**Terminal 2 - Run each phase in order:**
 ```bash
 # Phase 1: Baseline federated learning 
 python fl_phase1.py
@@ -526,16 +525,16 @@ python generate_results.py
 
 | Error | Fix |
 |---|---|
-| `ConnectionRefusedError` | Ganache not running — restart Terminal 1 |
+| `ConnectionRefusedError` | Ganache not running - restart Terminal 1 |
 | `ModuleNotFoundError: web3` | Run `pip install web3` |
 | `ModuleNotFoundError: solcx` | Run `pip install py-solc-x` |
 | `FileNotFoundError: ModelRegistry.sol` | Run from inside `bfl_project/` folder |
 | `SolcError` | Run `python -c "from solcx import install_solc; install_solc('0.8.0')"` |
-| TensorFlow GPU warning on Windows | Safe to ignore — CPU training works correctly |
+| TensorFlow GPU warning on Windows | Safe to ignore - CPU training works correctly |
 
 ---
 
-## 9. Implementation — Phase by Phase
+## 9. Implementation - Phase by Phase
 
 ### Phase 1: Federated Learning Baseline
 
@@ -591,10 +590,10 @@ Final accuracy: 96.20%
 
 **Three mechanisms added:**
 
-1. Differential Privacy — Gaussian noise added to all client weights (epsilon=100)
-2. Cosine similarity trust scoring — each client scored every round
-3. Automatic rejection — trust score below 0.85 triggers permanent block
-4. Model reset — global model reinitialised when attacker is first caught
+1. Differential Privacy - Gaussian noise added to all client weights (epsilon=100)
+2. Cosine similarity trust scoring - each client scored every round
+3. Automatic rejection - trust score below 0.85 triggers permanent block
+4. Model reset - global model reinitialised when attacker is first caught
 
 **Attack timeline:**
 ```
@@ -637,18 +636,6 @@ Total on-chain updates: 61
 
 ---
 
-## 11. Team
-
-| Name | USN | Email |
-|---|---|---|
-| Aman Nayan | ENG23CY0004 | amannayan1905@gmail.com |
-| Kushal M G | ENG23CY0022 | eng23cy0022@dsu.edu.in |
-| Likith M | ENG23CY0023 | eng23cy0022@dsu.edu.in |
-| Madhukar N | ENG23CY0024 | madhukarnagaraju8050@gmail.com |
-| Narasimha Murthy K | ENG23CY0026 | narasimhabtech27@gmail.com |
-
----
-
 ## Key Concepts Glossary
 
 | Term | Plain English Meaning |
@@ -656,7 +643,7 @@ Total on-chain updates: 61
 | **Federated Learning** | Training AI across multiple devices without sharing raw data |
 | **FedAvg** | Server combines client updates using weighted average formula |
 | **Blockchain** | Permanent tamper-proof public record of all transactions |
-| **Smart Contract** | Self-executing code on Ethereum — runs automatically, no human needed |
+| **Smart Contract** | Self-executing code on Ethereum - runs automatically, no human needed |
 | **Ganache** | Local Ethereum blockchain for development and testing |
 | **Differential Privacy** | Adding calibrated random noise to protect data from reverse engineering |
 | **Trust Score** | A running score tracking how honest a client has been over time |
@@ -669,14 +656,32 @@ Total on-chain updates: 61
 
 ---
 
+## 11. Team
+
+| Name | USN | Email |
+|---|---|---|
+| Aman Nayan | ENG23CY0004 | amannayan1905@gmail.com |
+| Kushal M G | ENG23CY0022 | eng23cy0022@dsu.edu.in |
+| Likith M | ENG23CY0023 | Likith.mib01@gmail.com |
+| Madhukar N | ENG23CY0024 | madhukarnagaraju8050@gmail.com |
+| Narasimha Murthy K | ENG23CY0026 | narasimhabtech27@gmail.com |
+
+---
+
 ##  Mentor
 
 **Dr. Prajwalasimha S N**
 
 Associate Professor, Department of Computer Science and Engineering (Cyber Security)
-School of Engineering, Dayananda Sagar University, Bangalore — 562112
+School of Engineering, Dayananda Sagar University, Bangalore - 562112
 
 Email: prajwasimha.sn1@gmail.com
+
+---
+
+## Implemented In 
+
+**Dayananda Sagar University**
 
 ---
 
