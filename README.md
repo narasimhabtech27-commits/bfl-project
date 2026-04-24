@@ -684,5 +684,36 @@ Email: prajwasimha.sn1@gmail.com
 **Dayananda Sagar University**
 
 ---
+---
+### 🏫 Department  
+**Department of Computer Science and Engineering (Cyber Security)**  
+School of Engineering, Dayananda Sagar University  
+
+---
+
+## 🧑‍🏫 Mentor
+**Dr. Prajwalasimha S N**  
+_Ph.D., Postdoc. (NewRIIS)_  
+Associate Professor  
+
+Department of Computer Science and Engineering (Cyber Security)  
+School of Engineering, Dayananda Sagar University  
+
+---
+
+
+## 🔬 Laboratory
+
+**TTEH LAB**  
+School of Engineering  
+Dayananda Sagar University  
+
+📍 Bangalore – 562112, Karnataka, India  
+
+---
+
+## 12. 📄 IEEE Paper
+
+**DOI:** https://doi.org/10.1109/ICISC65841.2025.11187566
 
 
